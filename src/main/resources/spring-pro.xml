@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util" 
+       xsi:schemaLocation="
+http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context.xsd 
+http://www.springframework.org/schema/util
+http://www.springframework.org/schema/util/spring-util.xsd  ">
+
+    <description>配置引用项目内部properties注：此文件在web.xml中必须最后加载</description>
+<!-- <bean id="propertyConfigurer" -->
+<!-- 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"> -->
+<!-- 		<property name="locations"> -->
+<!-- 			<list> -->
+<!-- 				<value>classpath:conf/log4j.properties</value> -->
+<!-- 			</list> -->
+<!-- 		</property> -->
+<!-- 		<property name="fileEncoding"> -->
+<!-- 			<value>UTF-8</value> -->
+<!-- 		</property> -->
+<!-- 	</bean> -->
+    <!--获取到支付平台密钥配置信息   只能配置一次-->
+    <context:property-placeholder location="classpath:conf/jdbc.properties,classpath:conf/redis.properties" />
+    <bean id="paymentKeyInfo" class="com.zhph.base.common.PropertyMap">
+        <property name="locations">
+            <list>
+                <value>classpath:platform/payment/paymentEncryptKey.properties</value>
+            </list>
+        </property>
+    </bean>
+    <bean id="configProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="locations">
+            <list>
+                <value>classpath*:channel/common.properties</value>
+            </list>
+        </property>
+    </bean>
+    <!-- 取配置基础路径 -->
+    <util:properties id="commonInfo" location="classpath:channel/common.properties" />
+	<util:properties id="baofooKeyInfoPro" location="classpath:channel/bf/pro/baofoo.properties" />
+	<util:properties id="baofooKeyInfoDev" location="classpath:channel/bf/dev/baofoo.properties" />
+
+    <util:properties id="baofoobatchKeyInfoPro" location="classpath:channel/bf/pro/baofoobatch.properties" />
+    <util:properties id="baofoobatchKeyInfoDev" location="classpath:channel/bf/dev/baofoobatch.properties" />
+
+    <util:properties id="chinagKeyInfoPro" location="classpath:channel/an/pro/chinagpayPayDs.properties" />
+    <util:properties id="chinagKeyInfoDev" location="classpath:channel/an/dev/chinagpayPayDs.properties" />
+    
+    
+
+    <!--获取到宝付支付平台密钥配置信息-->
+	<!-- <bean id="bafooKeyInfo" class="com.zhph.base.common.PropertyMap"> -->
+	<!-- <property name="locations"> -->
+	<!-- <list> -->
+	<!-- <value>classpath:channel/bf/dev/baofoo.properties</value> -->
+	<!-- </list> -->
+	<!-- </property> -->
+	<!-- </bean> -->
+  
+ 
+	
+</beans>

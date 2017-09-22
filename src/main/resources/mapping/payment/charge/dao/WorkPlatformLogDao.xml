@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhph.payment.charge.dao.WorkPlatformLogDao" >
+
+    <insert id="insetWorkPlatformChargeLog" >
+      insert into ZHPH_WORK_PLATFORM_CHARGE_LOG
+      (
+        ID                , PLATFORM_CODE ,
+        CHARGE_CONTENT    , CHANNEL_NO    ,
+        CODE              , MESSAGE       ,
+        RESULTNO          , CREATE_TIME   ,
+        CHARGE_TYPE
+      )
+      VALUES
+      (
+        sys_guid()                          , #{pcd.platformCode ,jdbcType=VARCHAR}     ,
+        #{pcd.data ,jdbcType=VARCHAR}       , #{pcd.channelNo ,jdbcType=VARCHAR}        ,
+        #{ri.code ,jdbcType=VARCHAR}        , #{ri.message ,jdbcType=VARCHAR}           ,
+        #{ri.resultNo ,jdbcType=VARCHAR}    , sysdate                                   ,
+        #{chargeType ,jdbcType=VARCHAR}
+      )
+    </insert>
+
+</mapper>

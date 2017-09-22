@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhph.manager.dao.UserMapper">
+	<resultMap type="com.zhph.manager.model.UserBean" id="userBean" >
+		<id column="USER_ID" property="userId" jdbcType="VARCHAR" />
+		<result column="USER_NAME" property="userName" jdbcType="VARCHAR"/>
+		<result column="MOBILE" property="mobile" jdbcType="VARCHAR"/>
+		<result column="E_MAIL" property="eMail" jdbcType="VARCHAR"/>
+		<result column="ERROR_TIMES" property="errorTimes" jdbcType="NUMERIC"/>
+		<result column="IS_LOCK" property="isLock" jdbcType="VARCHAR"/>
+		<result column="CREATE_TIME" property="createTime" jdbcType="DATE"/>
+		<result column="LAST_TIME" property="lastTime" jdbcType="DATE"/>
+		<result column="STATUS" property="status" jdbcType="VARCHAR"/>
+		<result column="USER_PASS" property="userPass" jdbcType="VARCHAR"/>
+		<result column="LOGIN_CODE" property="loginCode" jdbcType="VARCHAR"/>
+		<result column="USER_CODE" property="userCode" jdbcType="VARCHAR"/>
+	</resultMap>
+	
+	<select id="findUserCount" resultType="int">
+			select count(1) from zhph_user where status='1'
+	</select>
+	
+	<select id="login" resultMap="userBean">
+		select * from zhph_user where LOGIN_CODE=#{loginCode,jdbcType=VARCHAR} and status='1' and IS_LOCK='N'
+	</select>
+	
+	<insert id="saveUser" parameterType="com.zhph.manager.model.UserBean">
+		insert into zhph_user(user_id,user_name,user_pass,MOBILE,E_MAIL,ERROR_TIMES,IS_LOCK,CREATE_TIME,LAST_TIME,STATUS,LOGIN_CODE,USER_CODE
+		) values (
+			#{userId,jdbcType=VARCHAR},
+			#{userName,jdbcType=VARCHAR},
+			#{userPass,jdbcType=VARCHAR},
+			#{mobile,jdbcType=VARCHAR},
+			#{eMail,jdbcType=VARCHAR},
+			#{errorTimes,jdbcType=NUMERIC},
+			#{isLock,jdbcType=VARCHAR},
+			#{createTime,jdbcType=DATE},
+			#{lastTime,jdbcType=DATE},
+			#{status,jdbcType=VARCHAR},
+			#{loginCode,jdbcType=VARCHAR},
+			#{userCode,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<update id="deleteUser" parameterType="String">
+		update zhph_user set status='0' where user_id=#{userId,jdbcType=VARCHAR}
+	</update>
+	
+	<select id="findUserById" parameterType="String" resultMap="userBean">
+		select * from zhph_user where user_id=#{userId,jdbcType=VARCHAR} and status='1'
+	</select>
+	
+	<update id="updateUserInfo" parameterType="com.zhph.manager.model.UserBean">
+		update zhph_user set 
+		MOBILE = #{mobile,jdbcType=VARCHAR},
+		E_MAIL = #{eMail,jdbcType=VARCHAR},
+		user_pass=#{userPass,jdbcType=VARCHAR}
+		where user_id=#{userId,jdbcType=VARCHAR}
+	</update>
+	
+	<update id="updateUserPartInfo" parameterType="com.zhph.manager.model.UserBean">
+		update zhph_user set
+		ERROR_TIMES=#{errorTimes,jdbcType=VARCHAR},
+		LAST_TIME=sysdate
+		where user_id=#{userId,jdbcType=VARCHAR}
+	</update>
+	
+	<select id="getPageUser" resultMap="userBean">
+		SELECT * FROM ( SELECT A.*, ROWNUM RN FROM (SELECT * FROM zhph_user where status='1') A <![CDATA[  WHERE ROWNUM <= #{end,jdbcType=NUMERIC} ) WHERE RN >= #{start,jdbcType=NUMERIC} ]]> 
+	</select>
+	
+	<select id="getUserByLoginCode" parameterType="String" resultMap="userBean">
+		select * from zhph_user where login_code=#{loginCode,jdbcType=VARCHAR} and status='1'
+	</select>
+</mapper>

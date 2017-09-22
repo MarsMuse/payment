@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhph.manager.dao.SingleInterLogMapper">
+  <resultMap id="BaseResultMap" type="com.zhph.manager.model.SingleInterLogList">
+    <result column="pri_number" jdbcType="VARCHAR" property="priNumber" />
+    <result column="loan_contract_no" jdbcType="VARCHAR" property="loanContractNo" />
+    <result column="payment_channel" jdbcType="VARCHAR" property="paymentChannel" />
+    <result column="terminal_id" jdbcType="VARCHAR" property="terminalId" />
+    <result column="request_no" jdbcType="VARCHAR" property="requestNo" />
+    <result column="trans_no" jdbcType="VARCHAR" property="transNo" />
+    <result column="interface_content" jdbcType="VARCHAR" property="interfaceContent" />
+    <result column="create_time" jdbcType="VARCHAR" property="createTime" />
+    <result column="charge_type" jdbcType="VARCHAR" property="chargeType" />
+    <result column="is_loop" jdbcType="VARCHAR" property="isLoop" />
+  </resultMap>
+  <sql id="Base_Column_List">
+      zsil.pri_number,zsil.loan_contract_no,zsil.payment_channel,zsil.terminal_id,interface_content,
+      case when request_no = 1 then '扣款发送报文' when request_no = 2 then '扣款接收报文' when request_no = 3 then '查询发送报文' when request_no = 4 then '查询接收报文' else request_no end as request_no,
+      trans_no,zsil.create_time,
+      case when charge_type = 1 then '单扣' when charge_type = 2 then '批扣' when charge_type = 3 then '单扣查询' when charge_type = 4 then '批扣查询' else charge_type end as charge_type,
+      zsil.is_loop
+  </sql>
+
+  <select id="getListForChannelList" parameterType="java.util.Map" resultMap="BaseResultMap" useCache="false">
+    select
+    <include refid="Base_Column_List" />
+    from zh_single_interface_log zsil
+    where 1=1
+    <if test="parameter.terminalId != null and parameter.terminalId != ''">
+      and zsil.terminal_id = #{parameter.terminalId}
+    </if>
+    <if test="parameter.transNo != null and parameter.transNo != ''">
+      and zsil.trans_no = #{parameter.transNo}
+    </if>
+    <if test="parameter.loanContractNo != null and parameter.loanContractNo != ''">
+      and zsil.loan_contract_no = #{parameter.loanContractNo}
+    </if>
+    <if test="parameter.paymentChannel != null and parameter.paymentChannel != ''">
+      and zsil.payment_channel = #{parameter.paymentChannel}
+    </if>
+    <!--order by PAYMENT_TIME DESC nulls last-->
+  </select>
+
+  <select id="queryInterfaceContent" parameterType="java.lang.String" resultType="java.lang.String" useCache="false">
+    select to_char(interface_content) as interface_content
+    from zh_single_interface_log
+    where PRI_NUMBER = #{priNumber}
+
+  </select>
+
+</mapper>

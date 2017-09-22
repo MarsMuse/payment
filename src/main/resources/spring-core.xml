@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+    xmlns:jaxws="http://cxf.apache.org/jaxws" xmlns:aop="http://www.springframework.org/schema/aop"
+    xsi:schemaLocation="
+http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/aop
+http://www.springframework.org/schema/aop/spring-aop.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context.xsd
+http://www.springframework.org/schema/tx
+http://www.springframework.org/schema/tx/spring-tx.xsd ">
+
+    <description>框架核心配置</description>
+
+    <bean id="applicationContextUtils" class="com.zhph.base.common.ApplicationContextUtils" />
+
+    <context:component-scan
+        base-package="com.zhph.**.service,
+                                          com.zhph.channel,
+                                          com.zhph.payment.proxy.paylogger,
+                                          com.zhph.api.service.impl,
+                                          com.zhph.**.dao" />
+
+    <import resource="spring-pro.xml" />
+    <!-- <import resource="spring-shiro.xml"/> -->
+    <import resource="spring-cxf.xml" />
+    <import resource="spring-redis.xml" />
+    <import resource="spring-dao.xml" />
+    <!-- <mvc:annotation-driven /> -->
+
+    <!-- 启动对@AspectJ注解的支持 -->
+    <!-- proxy-target-class等于true是强制使用cglib代理，proxy-target-class默认是false，如果你的类实现了接口 
+        就走JDK代理，如果没有，走cglib代理 -->
+    <!-- 注：对于单利模式建议使用cglib代理，虽然JDK动态代理比cglib代理速度快，但性能不如cglib -->
+    <!--如果不写proxy-target-class="true"这句话已没问题 -->
+    <aop:aspectj-autoproxy proxy-target-class="true" />
+    <!--切面日志处理 -->
+    <bean id="payLogAspect" class="com.zhph.payment.proxy.PayLogAspect"></bean>
+    <!--记录业务平台与支付平台扣款交互日志-->
+    <bean id="workPlatformLogAspect" class="com.zhph.payment.proxy.WorkPlatformChargeLogAspect"></bean>
+
+    <!--批扣定时-->  <!--单扣定时-->
+    <!--<bean id="batchPushTask" class="com.zhph.payment.charge.task.BatchPushTask"></bean>-->
+  <!--  <bean id="batchPushTask1" class="com.zhph.payment.charge.task.SinglePushTask"></bean>-->
+
+    
+   <!-- <bean id="myJobDetailA"    class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="batchPushTask"></property>
+        <property name="targetMethod" value="pushBatch"></property>
+        <property name="concurrent" value="false" />
+        &lt;!&ndash;&lt;!&ndash; 是否允许任务并发执行。当值为false时，表示必须等到前一个线程处理完毕后才再启一个新的线程 &ndash;&gt;&ndash;&gt;
+    </bean>-->
+    <!--<bean id="myJobDetailB"        class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">-->
+        <!--<property name="targetObject" ref="batchPushTask1"></property>-->
+        <!--<property name="targetMethod" value="pushSingle"></property>-->
+        <!--<property name="concurrent" value="false" />-->
+        <!--&lt;!&ndash;&lt;!&ndash; 是否允许任务并发执行。当值为false时，表示必须等到前一个线程处理完毕后才再启一个新的线程 &ndash;&gt;&ndash;&gt;-->
+    <!--</bean>-->
+    <!--<bean id="myJobDetailC"        class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">-->
+        <!--<property name="targetObject" ref="batchPushTask1"></property>-->
+        <!--<property name="targetMethod" value="queryPaying"></property>-->
+        <!--<property name="concurrent" value="false" />-->
+        <!--&lt;!&ndash;&lt;!&ndash; 是否允许任务并发执行。当值为false时，表示必须等到前一个线程处理完毕后才再启一个新的线程 &ndash;&gt;&ndash;&gt;-->
+    <!--</bean>-->
+    
+    <!--<bean id="myTriggersA"-->
+        <!--class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">-->
+        <!--<property name="jobDetail" ref="myJobDetailA"/>-->
+        <!--<property name="cronExpression">-->
+            <!--<value>0 */2 * * * ?</value>-->
+        <!--</property>-->
+    <!--</bean>-->
+    
+    <!--<bean id="myTriggersB"-->
+        <!--class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">-->
+        <!--<property name="jobDetail" ref="myJobDetailB"/>-->
+        <!--<property name="cronExpression">-->
+            <!--<value>0 */2 * * * ?</value>-->
+        <!--</property>-->
+    <!--</bean>-->
+    <!---->
+    <!--<bean id="myTriggersC"-->
+        <!--class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">-->
+        <!--<property name="jobDetail" ref="myJobDetailC"/>-->
+        <!--<property name="cronExpression">-->
+            <!--<value>0 */2 * * * ?</value>-->
+        <!--</property>-->
+    <!--</bean> -->
+
+    <!--<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">-->
+        <!--<property name="triggers">-->
+            <!--<list>-->
+                <!--<ref bean="myTriggersA" />-->
+               <!--&lt;!&ndash; <ref bean="myTriggersB" />-->
+                <!--<ref bean="myTriggersC" />&ndash;&gt;-->
+            <!--</list>-->
+        <!--</property>-->
+    <!--</bean>-->
+
+</beans>

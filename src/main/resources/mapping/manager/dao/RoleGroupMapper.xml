@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhph.manager.dao.RoleGroupMapper">
+
+
+	<resultMap type="com.zhph.manager.model.RoleGroupBean" id="roleGroupBean" >
+		<id column="ROLE_ID" property="roleId" jdbcType="VARCHAR" />
+		<result column="GROUP_ID" property="groupId" jdbcType="VARCHAR"/>
+		<result column="CREATE_TIME" property="createTime" jdbcType="DATE"/>
+	</resultMap>
+	
+	
+	<insert id="insertRoleRelation" parameterType="list">
+			insert into ZHPH_ROLE_GROUP(ROLE_ID,GROUP_ID)  
+		<foreach collection="list" item="item" index="index" separator="union" open="(" close=")">
+			select 
+			#{item.roleId,jdbcType=VARCHAR},
+			#{item.groupId,jdbcType=VARCHAR}
+			from dual
+		</foreach>
+		
+	</insert>
+	
+	<select id="queryRoleRelation" parameterType="java.lang.String" resultType="int">
+			select count(1) from ZHPH_ROLE_GROUP where GROUP_ID=#{groupId}
+	</select>
+	
+	<delete id="deleteRoleRelation" parameterType="java.lang.String">
+			delete from ZHPH_ROLE_GROUP where GROUP_ID=#{groupId}
+	</delete>
+	
+	<select id="getRoleRelationByLoginCode" parameterType="String" resultType="java.util.HashMap">
+	select d.role_id from ( select b.group_id from zhph_user a ,zhph_user_group b where a.user_id=b.user_id and a.login_code=#{loginCode,jdbcType=VARCHAR}) e left join zhph_role_group d on d.group_id=e.group_id
+	</select>
+	
+</mapper>

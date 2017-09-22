@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhph.manager.dao.WorkPlatformDao" >
+
+    <select id="getListForCipherKey"  parameterType="java.util.Map"  resultType="com.zhph.manager.model.WorkPlatformBasicInfo">
+
+
+        SELECT  id , platform_code  AS platformCode ,
+        platform_name  AS platformName ,certificate_path AS certificatePath ,
+        certificate_name AS certificateName ,create_by  AS  createBy ,
+        create_time  AS createTime ,update_by  AS updateBy ,
+        update_time  AS updateTime ,locked ,
+        flag ,sign_call_back_path AS signCallBackPath ,
+        batch_call_back_path AS  batchCallBackPath
+        FROM zhph_work_platform_information
+        where flag = '1'
+        <if test="parameter.platformName != null and parameter.platformName != '' ">
+            and platform_name = #{parameter.platformName}
+        </if>
+
+        <if test="parameter.platformCode != null and parameter.platformCode != '' ">
+           and  platform_code = #{parameter.platformCode}
+        </if>
+    </select>
+
+    <update id="updateCipherKeyInfo" parameterType="java.util.Map">
+        update zhph_work_platform_information
+        set certificate_path = #{parameter.certificatePath} ,
+            certificate_name = #{parameter.certificateName} ,
+            update_by = #{parameter.userCode} ,
+            update_time = sysdate
+        where id = #{parameter.id}
+    </update>
+
+</mapper>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhph.payment.charge.dao.BatchInterfaceLogMapper" >
+
+  <resultMap id="BaseResultMap" type="com.zhph.payment.charge.entity.BatchInterfaceLog" >
+	    <id column="PRI_NUMBER" property="priNumber" jdbcType="VARCHAR" />
+	    <result column="BATCH_NO" property="batchNo" jdbcType="VARCHAR" />
+	    <result column="REQUEST_NO" property="requestNo" jdbcType="CHAR" />
+	    <result column="TERMINAL_ID" property="terminalId" jdbcType="VARCHAR" />
+	    <result column="PAYMENT_CHANNEL" property="paymentChannel" jdbcType="VARCHAR" />
+	    <result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  
+  <resultMap extends="BaseResultMap"  id="ResultMapWithBLOBs" type="com.zhph.payment.charge.entity.BatchInterfaceLog" >
+    <result column="INTERFACE_CONTENT" property="interfaceContent" jdbcType="CLOB" />
+  </resultMap>
+  
+  <insert id="insert" parameterType="com.zhph.payment.charge.entity.BatchInterfaceLog" >
+    <selectKey keyProperty="priNumber" resultType="String" order="BEFORE">
+      select sys_guid() from dual
+    </selectKey>
+    insert into ZH_BATCH_INTERFACE_LOG (PRI_NUMBER, BATCH_NO, REQUEST_NO,
+       <if test="terminalId != null and terminalId != ''">
+         TERMINAL_ID,
+       </if>
+      <if test="paymentChannel != null and paymentChannel != ''">
+        PAYMENT_CHANNEL,
+      </if>
+       CREATE_TIME,
+      INTERFACE_CONTENT)
+    values (#{priNumber,jdbcType=VARCHAR}, #{batchNo,jdbcType=VARCHAR}, #{requestNo,jdbcType=CHAR},
+      <if test="terminalId != null and terminalId != ''">
+        #{terminalId,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentChannel != null and paymentChannel != ''">
+        #{paymentChannel,jdbcType=VARCHAR},
+      </if>
+       SYSDATE,
+      #{interfaceContent,jdbcType=CLOB})
+  </insert>
+  
+  <insert id="insertSelective" parameterType="com.zhph.payment.charge.entity.BatchInterfaceLog" >
+    insert into ZH_BATCH_INTERFACE_LOG
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="priNumber != null  and priNumber != ''"  >
+        PRI_NUMBER,
+      </if>
+      <if test="batchNo != null  and batchNo != ''" >
+        BATCH_NO,
+      </if>
+      <if test="requestNo != null  and requestNo != ''" >
+        REQUEST_NO,
+      </if>
+      <if test="terminalId != null and terminalId != ''" >
+        TERMINAL_ID,
+      </if>
+      <if test="paymentChannel != null  and paymentChannel != ''" >
+        PAYMENT_CHANNEL,
+      </if>
+      <if test="createTime != null  and createTime != ''" >
+        CREATE_TIME,
+      </if>
+      <if test="interfaceContent != null  and interfaceContent != ''" >
+        INTERFACE_CONTENT,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="priNumber != null  and priNumber != ''" >
+        #{priNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="batchNo != null  and batchNo != ''" >
+        #{batchNo,jdbcType=VARCHAR},
+      </if>
+      <if test="requestNo != null  and requestNo != ''" >
+        #{requestNo,jdbcType=CHAR},
+      </if>
+      <if test="terminalId != null  and terminalId != ''" >
+        #{terminalId,jdbcType=VARCHAR},
+      </if>
+      <if test="paymentChannel != null  and paymentChannel != ''" >
+        #{paymentChannel,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null  and createTime != ''" >
+        SYSDATE,
+      </if>
+      <if test="interfaceContent != null  and interfaceContent != ''" >
+        #{interfaceContent,jdbcType=CLOB},
+      </if>
+    </trim>
+  </insert>
+</mapper>

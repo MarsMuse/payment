@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhph.manager.dao.PaymentRecordeMapper">
+  <resultMap id="BaseResultMap" type="com.zhph.manager.model.PaymentRecorde">
+    <result column="terminal_id" jdbcType="VARCHAR" property="terminalId" />
+    <result column="NAME" jdbcType="VARCHAR" property="name" />
+    <result column="BANK_CARD" jdbcType="VARCHAR" property="bankCard" />
+    <result column="TRANS_NO" jdbcType="VARCHAR" property="transNo" />
+    <result column="TRANS_TYPE" jdbcType="CHAR" property="transType" />
+    <result column="LOAN_CONTRACT_NO" jdbcType="VARCHAR" property="loanContractNo" />
+    <result column="PAYMENT_CHANNEL" jdbcType="VARCHAR" property="paymentChannel" />
+    <result column="BANK_CODE" jdbcType="VARCHAR" property="bankCode" />
+    <result column="TRANS_AMOUNT" jdbcType="DECIMAL" property="transAmount" />
+    <result column="PAYMENT_CODE" jdbcType="CHAR" property="paymentCode" />
+    <result column="PAYMENT_DESC" jdbcType="VARCHAR" property="paymentDesc" />
+    <result column="PAYMENT_TIME" jdbcType="VARCHAR" property="paymentTime" />
+    <result column="CREATE_TIME" jdbcType="VARCHAR" property="createTime" />
+    <result column="UPDATE_TIME" jdbcType="VARCHAR" property="updateTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    terminal_id,NAME, BANK_CARD, TRANS_NO, THIRD_BATCH_NO,
+    case when TRANS_TYPE = 1 then '单扣' when TRANS_TYPE = 2 then '批扣' else TRANS_TYPE end as TRANS_TYPE,
+    LOAN_CONTRACT_NO, PAYMENT_CHANNEL, BANK_CODE, TRANS_AMOUNT,
+    case when PAYMENT_CODE = 1 then '成功' when PAYMENT_CODE = 2 then '扣款中' when PAYMENT_CODE = 3 then '扣款失败' else PAYMENT_CODE end as PAYMENT_CODE,
+    PAYMENT_DESC, PAYMENT_TIME, CREATE_TIME, UPDATE_TIME
+  </sql>
+
+  <select id="getListForChannelList" parameterType="java.util.Map" resultMap="BaseResultMap" useCache="false">
+    select 
+    <include refid="Base_Column_List" />
+    from ZH_PAYMENT_RECORD where trans_type = 1
+    <if test="parameter.terminalId != null and parameter.terminalId != ''">
+      and terminal_id = #{parameter.terminalId}
+    </if>
+    <if test="parameter.name != null and parameter.name != ''">
+      and name = #{parameter.name}
+    </if>
+    <if test="parameter.bankCard != null and parameter.bankCard != ''">
+      and bank_card = #{parameter.bankCard}
+    </if>
+    <if test="parameter.transNo != null and parameter.transNo != ''">
+      and trans_no = #{parameter.transNo}
+    </if>
+    <if test="parameter.loanContractNo != null and parameter.loanContractNo != ''">
+      and loan_contract_no = #{parameter.loanContractNo}
+    </if>
+    <if test="parameter.paymentChannel != null and parameter.paymentChannel != ''">
+      and payment_channel = #{parameter.paymentChannel}
+    </if>
+    order by PAYMENT_TIME DESC nulls last
+  </select>
+
+</mapper>

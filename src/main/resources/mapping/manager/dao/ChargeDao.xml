@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhph.manager.dao.ChargeDao" >
+    <resultMap id="baseResultMap" type="com.zhph.payment.charge.entity.ChargeRecordDetail">
+        <result column="platform_code" jdbcType="VARCHAR" property="platform_code" />
+        <result column="charge_channel_code" jdbcType="VARCHAR" property="charge_channel_code" />
+        <result column="single_no" jdbcType="VARCHAR" property="single_no" />
+        <result column="branch_org_name" jdbcType="VARCHAR" property="branch_org_name" />
+        <result column="loan_no" jdbcType="VARCHAR" property="loan_no" />
+        <result column="loan_name" jdbcType="VARCHAR" property="loan_name" />
+        <result column="loan_id_card" jdbcType="VARCHAR" property="loan_id_card" />
+        <result column="phone_number" jdbcType="VARCHAR" property="phone_number" />
+        <result column="payment_date" jdbcType="DATE" property="payment_date" />
+        <result column="bill_term" jdbcType="CHAR" property="bill_term" />
+        <result column="account_number" jdbcType="VARCHAR" property="account_number" />
+        <result column="amount" jdbcType="VARCHAR" property="amount" />
+        <result column="real_amount" jdbcType="VARCHAR" property="real_amount" />
+        <result column="operate_name" jdbcType="DATE" property="operate_name" />
+        <result column="operate_time" jdbcType="DATE" property="operate_time" />
+        <result column="charge_time" jdbcType="DATE" property="charge_time" />
+        <result column="charge_message" jdbcType="VARCHAR" property="charge_message" />
+        <result column="charge_status" jdbcType="VARCHAR" property="charge_status" />
+        <result column="push_flag" jdbcType="VARCHAR" property="push_flag" />
+        <result column="push_count" jdbcType="VARCHAR" property="push_count" />
+        <result column="flag" jdbcType="VARCHAR" property="flag" />
+        <result column="mian_body" jdbcType="VARCHAR" property="mian_body" />
+        <result column="bank_key" jdbcType="VARCHAR" property="bank_key" />
+        <result column="create_time" jdbcType="DATE" property="create_time" />
+        <result column="update_time" jdbcType="VARCHAR" property="update_time"/>
+        <result column="update_flag" jdbcType="DATE" property="update_flag" />
+        <result column="push_time" jdbcType="DATE" property="push_time" />
+        <result column="send_flag" jdbcType="VARCHAR" property="send_flag" />
+        <result column="cut_no" jdbcType="VARCHAR" property="cut_no"/>
+    </resultMap>
+    <sql id="singleColumn"><!--正常返回列-->
+          bc.cut_no,bc.platform_code,zcbi.channel_name as charge_channel_code,bc.charge_no as single_no ,bc.branch_org_name,bc.loan_no,bc.loan_name,bc.loan_id_card,
+          bc.phone_number,bc.payment_date,bc.bill_term,bc.account_number,bc.amount,bc.real_amount,bc.operate_name,
+
+                       case when bc.operate_time is null then '' when length(bc.operate_time) = 10 then bc.operate_time else to_char(to_date('1970-01-01 00:00:00','yyyy-mm-dd hh24:mi:ss') + (bc.operate_time/1000/24/60/60)  + 8/24,'yyyy-mm-dd hh24:mi:ss')  end  as operate_time ,
+          case when bc.charge_time is null then '' else to_char(to_date(bc.charge_time,'yyyy-mm-dd hh24:mi:ss'),'yyyy-mm-dd hh24:mi:ss') end  as charge_time,
+          case when bc.update_time is null then '' else to_char(bc.update_time,'yyyy-mm-dd hh24:mi:ss') end  as update_time,
+          charge_message as charge_message,
+          case when bc.charge_status = 0 then '扣款中' when bc.charge_status = 1 then '扣款成功' when bc.charge_status = 2 then '扣款失败' else bc.charge_status end as charge_status,
+          case when bc.push_flag = 0 then '未推送' when bc.push_flag = 1 then '推送成功' when bc.push_flag = 2 then '推送失败'  else bc.push_flag end as push_flag,
+          bc.push_count,
+          case when bc.flag = 0 then '无效' when bc.flag = 1 then '有效'  else bc.flag end as flag,
+          bc.mian_body, zbnk.bank_name as bank_key, bc.create_time,
+          case when bc.update_flag = 0 then '未更新' when bc.update_flag = 1 then '已更新' else bc.update_flag end as update_flag,
+          case when bc.send_flag = 0 then '发送中' when bc.send_flag = 1 then '发送成功' when bc.send_flag = 2 then '发送失败' else bc.send_flag end as send_flag,
+          bc.push_time
+    </sql>
+    <select id="getListForChannelList" parameterType="java.util.Map" resultMap="baseResultMap" useCache="false">
+        select
+        <include refid="singleColumn"/>
+        from zh_charge_record_detail bc
+        left join zh_channel_basic_info zcbi
+        on zcbi.channel_no = bc.charge_channel_code and bc.mian_body = zcbi.main_body
+        left join zh_bank_normal_key zbnk
+        on bc.bank_key = zbnk.bank_key
+        where   bc.charge_type = 1
+        <if test="parameter.platform_code != null and parameter.platform_code != ''">
+            and bc.platform_code = #{parameter.platform_code}
+        </if>
+        <if test="parameter.charge_status != null and parameter.charge_status != ''">
+            and bc.charge_status = #{parameter.charge_status}
+        </if>
+        <if test="parameter.mian_body != null and parameter.mian_body != ''">
+            and bc.mian_body = #{parameter.mian_body}
+        </if>
+        <if test="parameter.push_flag != null and parameter.push_flag != ''">
+            and bc.push_flag = #{parameter.push_flag}
+        </if>
+        <if test="parameter.flag != null and parameter.flag != ''">
+            and bc.flag = #{parameter.flag}
+        </if>
+        <if test="parameter.update_flag != null and parameter.update_flag != ''">
+            and bc.update_flag = #{parameter.update_flag}
+        </if>
+        <if test="parameter.send_flag != null and parameter.send_flag != ''">
+            and bc.send_flag = #{parameter.send_flag}
+        </if>
+        <if test="parameter.operate_name != null and parameter.operate_name != ''">
+            and bc.operate_name = #{parameter.operate_name}
+        </if>
+        <if test="parameter.branch_org_name != null and parameter.branch_org_name != ''">
+            and bc.branch_org_name = #{parameter.branch_org_name}
+        </if>
+        <if test="parameter.loan_no != null and parameter.loan_no != ''">
+            and bc.loan_no = #{parameter.loan_no}
+        </if>
+        <if test="parameter.loan_name != null and parameter.loan_name != ''">
+            and bc.loan_name = #{parameter.loan_name}
+        </if>
+        <if test="parameter.charge_channel_code != null and parameter.charge_channel_code != ''">
+            and zcbi.channel_name = #{parameter.charge_channel_code}
+        </if>
+        <if test="parameter.single_no != null and parameter.single_no != ''">
+            and( bc.cut_no = #{parameter.single_no} or bc.charge_no = #{parameter.single_no})
+        </if>
+        <if test="parameter.createTimeStart != null and parameter.createTimeStart != ''"  >
+            AND bc.create_time &gt;= to_date(#{parameter.createTimeStart} || ' 00:00:00','yyyy-MM-dd hh24:mi:ss')
+        </if>
+        <if test="parameter.createTimeEnd != null and parameter.createTimeEnd != ''"  >
+            AND bc.create_time &lt;= to_date(#{parameter.createTimeEnd} || ' 23:59:59','yyyy-MM-dd hh24:mi:ss')
+        </if>
+        <if test="parameter.updateTimeStart != null and parameter.updateTimeStart != ''"  >
+            AND bc.update_time &gt;= to_date(#{parameter.updateTimeStart} || ' 00:00:00','yyyy-MM-dd hh24:mi:ss')
+        </if>
+        <if test="parameter.updateTimeEnd != null and parameter.updateTimeEnd != ''"  >
+            AND bc.update_time &lt;= to_date(#{parameter.updateTimeEnd} || ' 23:59:59','yyyy-MM-dd hh24:mi:ss')
+        </if>
+        order by  bc.charge_time DESC nulls last
+    </select>
+</mapper>

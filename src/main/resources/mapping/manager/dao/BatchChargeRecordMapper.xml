@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhph.manager.dao.BatchChargeRecordMapper" >
+    <resultMap id="JSONPlatformListMap" type="com.alibaba.fastjson.JSONObject">
+		<result column="platform_code" jdbcType="VARCHAR" property="platformCode" />
+		<result column="platform_name" jdbcType="VARCHAR" property="platformName" />
+	</resultMap>
+	
+	<resultMap id="JSONChannelListMap" type="com.alibaba.fastjson.JSONObject">
+		<result column="channel_no" jdbcType="VARCHAR" property="channelNo" />
+		<result column="channel_name" jdbcType="VARCHAR" property="channelName" />
+	</resultMap>
+	
+    <!-- 获取全部批扣记录信息 -->
+    <select id="getListForBathChargeRecordList" parameterType="java.util.Map" resultType="com.zhph.manager.model.BatchChargeRecordList">
+      SELECT ROWNUM rn, a.* FROM(
+        SELECT p.platform_name platformName,
+		       i.batch_no batchNo,
+		       i.send_info_count sendInfoCount,
+		       i.reply_info_count replyInfoCount,
+		       NVL(p.pushCount,0) pushCount,
+		       i.create_time createTime,
+		       i.update_time updateTime,
+               (case
+                 when i.end_flag = '0'
+                 then '未结束'
+                 when i.end_flag = '1'
+                 then '已结束'
+               end) endFlag,
+		       c.channel_name channelName,
+		       (case
+                 when i.send_flag = '0'
+                 then '发送中'
+                 when i.send_flag = '1'
+                 then '发送成功'
+                 when i.send_flag = '2'
+                 then '发送失败'
+               end) sendFlag,
+               i.main_body mainBody
+	      FROM zh_batch_charge_info i
+	      LEFT JOIN zh_channel_basic_info c
+            ON i.channel_no = c.channel_no and i.main_body = c.main_body
+          LEFT JOIN zhph_work_platform_information p
+            ON i.platform_code = p.platform_code
+          LEFT JOIN
+           (SELECT d.batch_no batchNo, COUNT(1) pushCount 
+              FROM zh_charge_record_detail d
+             WHERE d.push_flag = '1' 
+               AND d.batch_no IS NOT NULL
+             GROUP BY d.batch_no) p
+            ON i.batch_no = p.batchNo
+         WHERE 1=1
+         <if test="params.platformCode != null and params.platformCode != ''"  >
+           AND i.platform_code = #{params.platformCode}
+         </if>
+         <if test="params.batchNo != null and params.batchNo != ''"  >
+           AND i.batch_no like '%' || #{params.batchNo} || '%'
+         </if>
+         <if test="params.endFlag != null and params.endFlag != ''"  >
+           AND i.end_flag = #{params.endFlag}
+         </if>
+         <if test="params.channelNo != null and params.channelNo != ''"  >
+           AND i.channel_no = #{params.channelNo}
+         </if>
+         <if test="params.sendFlag != null and params.sendFlag != ''"  >
+           AND i.send_flag = #{params.sendFlag}
+         </if>
+         <if test="params.mainBody != null and params.mainBody != ''"  >
+           AND i.main_body = #{params.mainBody}
+         </if>
+         <if test="params.createBeginTime != null and params.createBeginTime != ''"  >
+           AND i.create_time &gt;= to_date(#{params.createBeginTime} || ' 00:00:00','yyyy-MM-dd hh24:mi:ss')
+         </if>
+         <if test="params.createEndTime != null and params.createEndTime != ''"  >
+           AND i.create_time &lt;= to_date(#{params.createEndTime} || ' 23:59:59','yyyy-MM-dd hh24:mi:ss')
+         </if>
+         <if test="params.updateBeginTime != null and params.updateBeginTime != ''"  >
+           AND i.update_time &gt;= to_date(#{params.updateBeginTime} || ' 00:00:00','yyyy-MM-dd hh24:mi:ss')
+         </if>
+         <if test="params.updateEndTime != null and params.updateEndTime != ''"  >
+           AND i.update_time &lt;= to_date(#{params.updateEndTime} || ' 23:59:59','yyyy-MM-dd hh24:mi:ss')
+         </if>
+         ORDER BY i.update_time DESC, i.batch_no DESC) a
+    </select>
+    
+    <!-- 获取批扣详细信息 -->
+    <select id="getListForBathChargeRecordDetail" parameterType="java.util.Map" resultType="com.zhph.manager.model.BatchChargeRecordDetail">
+      SELECT ROWNUM rn, a.* FROM(
+        SELECT p.platform_name platformName,
+               (case
+                 when d.charge_type = '1'
+                 then '单笔扣款'
+                 when d.charge_type = '2'
+                 then '批量扣款'
+               end) chargeType,
+               c.channel_name chargeChannelName,
+               d.charge_no chargeNo,
+               d.branch_org_name branchOrgName,
+               d.loan_no loanNo,
+               d.loan_name loanName,
+               d.loan_id_card loanIdCard,
+               d.phone_number phoneNumber,
+               d.payment_date paymentDate,
+               d.bill_term billTerm,
+               d.account_number accountNumber,
+               d.amount amount,
+               d.operate_name operateName,
+               TO_CHAR(d.operate_time / (1000 * 60 * 60 * 24) + TO_DATE('1970-01-01 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'YYYY-MM-DD HH24:MI:SS') operateTime,
+               TO_CHAR(NVL2(d.charge_time,to_date(d.charge_time ,'yyyy-MM-dd HH24:mi:ss'),NULL), 'YYYY-MM-DD HH24:MI:SS') chargeTime,
+               d.charge_message chargeMessage,
+               (case
+                 when d.charge_status = '0'
+                 then '扣款中'
+                 when d.charge_status = '1'
+                 then '扣款成功'
+                 when d.charge_status = '2'
+                 then '扣款失败'
+               end) chargeStatus,
+               (case
+                 when d.push_flag = '0'
+                 then '未推送'
+                 when d.push_flag = '1'
+                 then '推送成功'
+                 when d.push_flag = '2'
+                 then '推送失败'
+               end) pushFlag,
+               d.push_count pushCount, 
+               d.flag flag, 
+               d.mian_body mianBody,
+               d.bank_key bankKey, 
+               d.create_time createTime, 
+               d.update_time updateTime,
+               (case
+                 when d.update_flag = '0'
+                 then '未更新'
+                 when d.update_flag = '1'
+                 then '已更新'
+               end) updateFlag,
+               d.push_time pushTime
+          FROM zh_charge_record_detail d
+          LEFT JOIN zh_channel_basic_info c
+            ON d.charge_channel_code = c.channel_no and d.mian_body = c.main_body
+          LEFT JOIN zhph_work_platform_information p
+            ON d.platform_code = p.platform_code 
+         WHERE d.batch_no = #{params.batchNo}
+         <if test="params.platformCode != null and params.platformCode != ''"  >
+           AND d.platform_code = #{params.platformCode}
+         </if>
+         <if test="params.chargeStatus != null and params.chargeStatus != ''"  >
+           AND d.charge_status = #{params.chargeStatus}
+         </if>
+         <if test="params.updateFlag != null and params.updateFlag != ''"  >
+           AND d.update_flag = #{params.updateFlag}
+         </if>
+         <if test="params.channelNo != null and params.channelNo != ''"  >
+           AND d.charge_channel_code = #{params.channelNo}
+         </if>
+         <if test="params.loanNo != null and params.loanNo != ''"  >
+           AND d.loan_no = #{params.loanNo}
+         </if>
+         <if test="params.loanName != null and params.loanName != ''"  >
+           AND d.loan_name like '%' || #{params.loanName} || '%'
+         </if>
+         <if test="params.chargeNo != null and params.chargeNo != ''"  >
+           AND d.charge_no = #{params.chargeNo}
+         </if>
+         <if test="params.paymentBeginDate != null and params.paymentBeginDate != ''"  >
+           AND to_date(d.payment_date,'yyyy-MM-dd') &gt;= to_date(#{params.paymentBeginDate},'yyyy-MM-dd')
+         </if>
+         <if test="params.paymentEndDate != null and params.paymentEndDate != ''"  >
+           AND to_date(d.payment_date,'yyyy-MM-dd') &lt;= to_date(#{params.paymentEndDate},'yyyy-MM-dd')
+         </if>
+         <if test="params.chargeBeginTime != null and params.chargeBeginTime != ''"  >
+           AND to_date(d.charge_time ,'yyyy-MM-dd HH24:mi:ss') &gt;= to_date(#{params.chargeBeginTime} || ' 00:00:00','yyyy-MM-dd hh24:mi:ss')
+         </if>
+         <if test="params.chargeEndTime != null and params.chargeEndTime != ''"  >
+           AND to_date(d.charge_time ,'yyyy-MM-dd HH24:mi:ss') &lt;= to_date(#{params.chargeEndTime} || ' 23:59:59','yyyy-MM-dd hh24:mi:ss')
+         </if>
+         ORDER BY d.update_time DESC, d.loan_no DESC) a
+    </select>
+    
+    <!-- 获取平台下拉框集合 -->
+    <select id="getPlatformList" resultMap="JSONPlatformListMap">
+        SELECT p.platform_code,
+               p.platform_name
+          FROM zhph_work_platform_information p
+    </select>
+                                        
+    <!-- 获取渠道下拉框集合 -->
+    <select id="getChannelList" resultMap="JSONChannelListMap">
+        SELECT distinct c.channel_no,
+               c.channel_name
+          FROM zh_channel_basic_info c
+    </select>
+    
+</mapper>

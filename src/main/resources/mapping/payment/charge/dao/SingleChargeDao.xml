@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhph.payment.charge.dao.SingleChargeDao" >
+
+    <!--插入基础信息-->
+    <insert id="insertSingleBasicInfo" parameterType="com.zhph.payment.charge.entity.SingleChargeBasicInfo">
+           INSERT INTO zh_single_charge_info
+           (id ,  platform_code ,     single_no ,
+           send_info_count  , create_time ,
+           work_single_no ,channel_no )
+        SELECT
+         sys_guid() ,#{batchInfo.platformCode,jdbcType=VARCHAR} ,#{batchInfo.singleNo,jdbcType=VARCHAR},
+         #{batchInfo.sendInfoCount,jdbcType=VARCHAR}, SYSDATE ,
+         #{batchInfo.worksingleNo,jdbcType=VARCHAR} ,#{batchInfo.channelNo,jdbcType=VARCHAR}
+         FROM dual
+        WHERE  NOT EXISTS (
+               SELECT izc.single_no
+               FROM zh_single_charge_info izc WHERE izc.single_no = #{batchInfo.singleNo,jdbcType=VARCHAR}
+        )
+    </insert>
+
+      <!-- 单扣数据基本信息插入 -->
+    <insert id="insertChargeRecordInfo" parameterType="com.zhph.entity.ParamsEntity">
+    	     INSERT INTO zh_charge_record_detail
+                (id , platform_code   , 
+                charge_type  , charge_no ,
+                branch_org_name       , loan_no ,
+                loan_name             , loan_id_card ,
+                phone_number          , payment_date ,
+                bill_term             , account_number ,
+                amount                , operate_name ,
+                operate_time          , mian_body  ,
+                bank_key              ,create_time ,
+                send_flag			  ,
+                <if test="batchInfo.arginiAmount != null and batchInfo.arginiAmount != ''">
+                	real_amount,
+                </if>
+                 <if test="batchInfo.batchCode != null and batchInfo.batchCode != ''">
+                 	batch_no,
+                 </if>
+                <if test="batchInfo.cutNo != null and batchInfo.cutNo != ''">
+                    cut_no,
+                </if>
+                charge_channel_code
+                )VALUES    
+                (sys_guid()                            , #{batchInfo.platformCode,jdbcType=VARCHAR},
+                '1',             #{batchInfo.chargeNo,jdbcType=VARCHAR},
+                #{batchInfo.branchOrgName,jdbcType=VARCHAR} , #{batchInfo.loanNo,jdbcType=VARCHAR},
+                #{batchInfo.loanName,jdbcType=VARCHAR}      , #{batchInfo.loanIdCard,jdbcType=VARCHAR},
+                #{batchInfo.phoneNumber,jdbcType=VARCHAR}   , #{batchInfo.paymentDate,jdbcType=VARCHAR},
+                #{batchInfo.billTerm,jdbcType=VARCHAR}      , #{batchInfo.accountNumber,jdbcType=VARCHAR},
+                #{batchInfo.amount,jdbcType=VARCHAR}        , #{batchInfo.operateName,jdbcType=VARCHAR},
+                #{batchInfo.operateTime,jdbcType=VARCHAR}   , #{batchInfo.mainBody,jdbcType=VARCHAR},
+                #{batchInfo.bankKey,jdbcType=VARCHAR}       , SYSDATE,
+                '0',
+                <if test="batchInfo.arginiAmount != null and batchInfo.arginiAmount != ''">
+                	 #{batchInfo.arginiAmount,jdbcType=VARCHAR},
+                </if>
+                <if test="batchInfo.batchCode != null and batchInfo.batchCode != ''">
+                 	#{batchInfo.batchCode,jdbcType=VARCHAR},
+                 </if>
+                <if test="batchInfo.cutNo != null and batchInfo.cutNo != ''">
+                    #{batchInfo.cutNo,jdbcType=VARCHAR},
+                </if>
+                #{batchInfo.paymentChannel,jdbcType=VARCHAR}
+                )
+    </insert>
+
+
+
+	<!-- 更新业务表状态  -->
+    <update id="updateReqChargeRecordInfo"  parameterType="java.lang.String" >
+    	update zh_charge_record_detail
+        set     CHARGE_STATUS = #{charge_status,jdbcType=VARCHAR},
+         <if test="charge_messgae != null and charge_messgae != ''">
+	        CHARGE_MESSAGE = #{charge_messgae,jdbcType=VARCHAR},
+         </if>
+        CHARGE_TIME = to_char(SYSDATE,'YYYYMMDDHH24MISS'),
+        UPDATE_TIME = SYSDATE,
+        UPDATE_FLAG = #{update_flag,jdbcType=VARCHAR},
+        <if test="amount != null and amount != ''">
+        	AMOUNT = #{amount,jdbcType=VARCHAR},
+        </if>
+        SEND_FLAG = #{send_flag,jdbcType=VARCHAR}
+        where CHARGE_NO = #{single_no, jdbcType=VARCHAR} 
+    </update>
+	
+	<!-- 获取平台返回接口 -->
+    <select id="getNeedPushPlatformInfo" resultType="com.zhph.payment.charge.entity.BatchPushPlatformInfo">
+        SELECT  zw.platform_code as  platformCode,zw.certificate_path AS  certificatePath ,zw.certificate_name AS certificateName,
+        zw.SIGN_CALL_BACK_PATH AS callBackPath
+        FROM
+        (
+        SELECT bc.platform_code as platformCode ,bc.SINGLE_NO AS SINGLE_NO ,COUNT(zcrd.id) AS pushCount,zcrd.charge_channel_code,zcrd.AMOUNT
+        FROM zh_single_charge_info bc
+        LEFT JOIN zh_charge_record_detail zcrd
+        ON (bc.SINGLE_NO = zcrd.CHARGE_NO or bc.SINGLE_NO = zcrd.cut_no)
+        WHERE
+        zcrd.send_flag != '0' and zcrd.send_flag != '3'
+        AND zcrd.update_flag ='1'
+        AND zcrd.push_flag != '1'
+        AND zcrd.charge_status != '0' and zcrd.PUSH_COUNT  &lt;= 100
+        GROUP BY bc.SINGLE_NO  ,bc.platform_code,zcrd.charge_channel_code,zcrd.AMOUNT
+        ) basicInfo
+        LEFT JOIN zhph_work_platform_information zw
+        ON basicInfo.platformCode = zw.platform_code
+        WHERE basicInfo.pushCount != '0'        AND zw.SIGN_CALL_BACK_PATH != '0'
+        GROUP BY  zw.platform_code,zw.certificate_path,zw.certificate_name,zw.SIGN_CALL_BACK_PATH
+    </select>
+    <!--根据平台Id查询结果-->
+    <select id="getNeedPushPlatformInfoByCode" parameterType="java.lang.String" resultType="com.zhph.payment.charge.entity.BatchPushPlatformInfo">
+          select platform_code as  platformCode,certificate_name AS certificateName, certificate_path AS  certificatePath,SIGN_CALL_BACK_PATH AS callBackPath
+         from zhph_work_platform_information where platform_code = #{platform_code, jdbcType=VARCHAR}
+    </select>
+    <!-- 获取要推送的数据 -->
+    <select id="getPushChargeInfo"  resultType="com.zhph.payment.charge.entity.SingleChargeInfo">
+           SELECT  bc.platform_code AS platformCode ,charge_no AS chargeNo ,zc.charge_no, zc.cut_no as groupChargeNo,
+          zc.loan_no AS loanNo ,zc.charge_time AS chargeTime,zc.operate_name as operateName,
+          zc.charge_message AS chargeMessage , zc.charge_status AS chargeStatus,zc.charge_channel_code as chargeChannelCode,zc.amount as  realAmount
+            FROM zh_single_charge_info bc
+            LEFT JOIN zh_charge_record_detail zc ON (bc.single_no = zc.CHARGE_NO or bc.single_no = zc.cut_no)    and  zc.CHARGE_TYPE = 1
+            WHERE zc.update_flag  = '1'
+            AND zc.charge_status != '0' and bc.send_info_count = bc.reply_info_count
+            AND zc.push_flag != '1'  and zc.PUSH_COUNT  &lt;= 100
+            AND bc.platform_code = #{platformInfo.platformCode}
+            and not exists(
+             select distinct(tt.cut_no)  as cutNo
+             from zh_charge_record_detail tt
+             where tt.charge_status = '0' and tt.cut_no is not null and  tt.cut_no = zc.cut_no
+           )
+    </select>
+
+    <select id="getPayingChargeInfo" resultType="com.zhph.payment.charge.entity.ChargeRecordDetail" flushCache="true">
+<!--     flag =1 数据有效 CHARGE_TYPE = 1 单扣  charge_status = 0 扣款中 -->
+        select * from zh_charge_record_detail tt where tt.charge_status = 0  and flag = 1  and tt.CHARGE_TYPE = 1
+        <!--
+        select * from zh_charge_record_detail tt where tt.charge_status = 0 and UPDATE_FLAG = 1 and flag = 1  and tt.CHARGE_TYPE = 1
+        -->
+
+      </select>
+    <select id="getPayingChargeInfoById" resultType="com.zhph.payment.charge.entity.ChargeRecordDetail" parameterType="java.lang.String" flushCache="true">
+        select * from zh_charge_record_detail tt where    (charge_no = #{charge_no} or cut_no =#{charge_no}) order by charge_status
+    </select>
+    <!-- 指定交易号查询状态-->
+    <select id="getSingleQueryPayingChargeInfo" parameterType="java.lang.String" resultType="com.zhph.payment.charge.entity.ChargeRecordDetail">
+                select * from zh_charge_record_detail zc
+                where zc.CHARGE_STATUS != 0  and zc.charge_type = 1   and (zc.charge_no = #{charge_no} or zc.cut_no =#{charge_no})  and zc.FLAG = 1 and zc.PUSH_FLAG != '1'
+                 and not exists(
+                     select distinct(tt.cut_no)  as cutNo
+                     from zh_charge_record_detail tt
+                     where tt.charge_status = '0' and (charge_no = #{charge_no} or cut_no =#{charge_no})   and tt.cut_no is not null and  tt.cut_no = zc.cut_no
+                )
+    </select>
+    <!-- 更新业务数据错误状态 -->
+     <update id="updatePushErrorInfo" parameterType="java.util.List">
+        <foreach collection="pushList"  item="item" index="index" separator=";" open="begin" close=";end;" >
+          UPDATE zh_charge_record_detail SET PUSH_FLAG = '2' , PUSH_TIME = SYSDATE , PUSH_COUNT = PUSH_COUNT+1
+          WHERE PUSH_FLAG != '1' AND  (CHARGE_NO =#{item.chargeNo} or CUT_NO=#{item.chargeNo})
+        </foreach>
+    </update>
+    <!-- 更新业务数据成功状态 -->
+     <update id="updateSinglePushInfo" parameterType="java.util.List">
+       <foreach collection="pushSingleInfo"  item="item" index="index" separator=";" open="begin" close=";end;" >
+           UPDATE zh_charge_record_detail SET PUSH_FLAG = #{item.status} , PUSH_TIME = SYSDATE , PUSH_COUNT = PUSH_COUNT+1
+           WHERE PUSH_FLAG != '1' AND  (CHARGE_NO =#{item.chargeNo} or CUT_NO=#{item.chargeNo}) 
+       </foreach>
+    </update>
+
+    <!--更改业务库状态 数据-->
+    <update id="updateLastState" parameterType="java.lang.String">
+         UPDATE  zh_charge_record_detail set CHARGE_STATUS = '1' ,CHARGE_MESSAGE ='扣款成功'
+          where real_amount - amount = 0 and  CHARGE_TYPE = 1
+           and (charge_no = #{single_no} or cut_no = #{single_no})
+    </update>
+    <!-- 分批多渠道的情况下。 发送次数迭加-->
+	<update id="updateSinlgeBatchSendCount">
+	  UPDATE zh_single_charge_info
+        set SEND_INFO_COUNT = SEND_INFO_COUNT+#{updateCount}
+        where   single_no = #{single_no}
+	</update>
+    <!-- 基础表累计加已扣款的条数 -->
+    <update id="updateSingleBatchReplyCount" >
+        UPDATE zh_single_charge_info
+        set REPLY_INFO_COUNT = REPLY_INFO_COUNT+#{updateCount}, UPDATE_TIME = SYSDATE   ,SEND_FLAG ='1'
+        where   single_no = #{single_no}
+    </update>
+    <!--  REPLY_INFO_COUNT = SEND_INFO_COUNT        and  去掉这个条件 -->
+    <update id="updateSingleEndFlag">
+     	UPDATE zh_single_charge_info
+        set end_flag = '1', UPDATE_TIME = SYSDATE
+        where SEND_FLAG ='1'   and single_no = #{single_no}
+    </update>
+    
+    <!--查询交易号拆分次数-->
+    <select id="getSingleQueryPayingSize" parameterType="java.lang.String" resultType="java.lang.Integer">
+         select SEND_INFO_COUNT from zh_single_charge_info where single_no = #{single_no} 
+    </select>
+
+</mapper>

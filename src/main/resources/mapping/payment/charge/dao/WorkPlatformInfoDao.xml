@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhph.payment.charge.dao.WorkPlatformInfoDao" >
+
+    <select id="getPlatformInforByCode" parameterType="java.lang.String"  resultType="com.zhph.payment.charge.entity.WorkPlatformEntity">
+
+        SELECT wp.id AS ID ,wp.platform_code AS platformCode ,
+        wp.platform_name AS platformName ,
+        wp.certificate_path AS certificatePath ,
+        wp.certificate_name AS certificateName
+        FROM zhph_work_platform_information wp
+        WHERE wp.flag = '1' AND wp.locked ='0'
+        <if test="platformCode != null and platformCode!= '' "  >
+            AND wp.platform_code = #{platformCode}
+        </if>
+    </select>
+
+</mapper>

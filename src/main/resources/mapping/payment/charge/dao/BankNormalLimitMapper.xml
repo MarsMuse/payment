@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhph.payment.charge.dao.BankNormalLimitMapper">
+
+  <cache/>
+
+  <resultMap id="BaseResultMap" type="com.zhph.payment.charge.entity.BankNormalLimit">
+    <id column="PRI_NUMBER" jdbcType="VARCHAR" property="priNumber" />
+    <result column="FINANCING_CHANNEL" jdbcType="VARCHAR" property="financingChannel" />
+    <result column="CHANNEL_NAME" jdbcType="VARCHAR" property="channelName" />
+    <result column="BANK_KEY" jdbcType="VARCHAR" property="bankKey" />
+    <result column="BANK_CODE" jdbcType="VARCHAR" property="bankCode" />
+    <result column="BANK_NAME" jdbcType="VARCHAR" property="bankName" />
+    <result column="SINGLE_AMOUNT_LIMIT" jdbcType="DECIMAL" property="singleAmountLimit" />
+    <result column="DAY_AMOUNT_LIMIT" jdbcType="DECIMAL" property="dayAmountLimit" />
+    <result column="DAY_COUNT_LIMIT" jdbcType="DECIMAL" property="dayCountLimit" />
+    <result column="DEDUCT_LEVEL" jdbcType="DECIMAL" property="deductLevel" />
+    <result column="IS_ENABLE" jdbcType="CHAR" property="isEnable" />
+    <result column="CREATE_USER_ID" jdbcType="VARCHAR" property="createUserId" />
+    <result column="CREATE_TIME" jdbcType="DATE" property="createTime" />
+    <result column="UPDATE_USER_ID" jdbcType="VARCHAR" property="updateUserId" />
+    <result column="UPDATE_TIME" jdbcType="DATE" property="updateTime" />
+    <result column="MAIN_BODY" jdbcType="VARCHAR" property="mainBody" />
+    <result column="SINGLE_AMOUNT_LIMIT_BATCH" jdbcType="DECIMAL" property="singleAmountLimitBatch" />
+    <result column="DAY_AMOUNT_LIMIT_BATCH" jdbcType="DECIMAL" property="dayAmountLimitBatch" />
+  </resultMap>
+
+  <resultMap type="com.zhph.payment.charge.entity.FinancingChannel" id="financingChannelMap">
+    <id column="PRI_NUMBER" property="id" jdbcType="VARCHAR" />
+    <result column="CHANNEL_NUMBER" property="channelNumber" jdbcType="VARCHAR" />
+    <result column="CHANNEL_NAME" property="channelName" jdbcType="VARCHAR" />
+    <result column="IS_SUPPORT_IMPORT" property="isSupportImport" jdbcType="VARCHAR" />
+    <result column="IS_USING" property="isUsing" jdbcType="VARCHAR" />
+    <result column="UPDATE_USER_ID" property="updateUserId" jdbcType="VARCHAR" />
+    <result column="UPDATE_USER_NAME" property="updateUserName" jdbcType="VARCHAR" />
+    <result column="UPDATE_TIME" property="updateTime" jdbcType="DATE" />
+    <result column="CREATE_TIME" property="createTime" jdbcType="DATE" />
+  </resultMap>
+
+
+
+  <sql id="Base_Column_List">
+    PRI_NUMBER, FINANCING_CHANNEL, CHANNEL_NAME, BANK_KEY, BANK_CODE, BANK_NAME, SINGLE_AMOUNT_LIMIT,
+    DAY_AMOUNT_LIMIT, DAY_COUNT_LIMIT, DEDUCT_LEVEL, IS_ENABLE, CREATE_USER_ID, CREATE_TIME,
+    UPDATE_USER_ID, UPDATE_TIME,financing_channel,SINGLE_AMOUNT_LIMIT_BATCH,DAY_AMOUNT_LIMIT_BATCH
+  </sql>
+
+  <select id="getFinancingChannelList" parameterType="map" resultMap="financingChannelMap">
+			select * from CLSPUSER.ZH_P2P_FINANCING_CHANNEL 
+			where 1=1 
+			AND IS_USING = '1'
+	</select>
+
+  <!-- 查询资源总条数 -->
+  <select id="getBankNormalLimitCount" parameterType="map" resultType="int" >
+    select count(1) from ZH_BANK_NORMAL_LIMIT where 1=1
+    <if test="channelNumber != null and channelNumber != ''">
+      AND FINANCING_CHANNEL = #{channelNumber,jdbcType=VARCHAR}
+    </if>
+    <if test="bankKey != null and bankKey != ''">
+      AND BANK_KEY = #{bankKey,jdbcType=VARCHAR}
+    </if>
+    <if test="mainBody != null and mainBody != ''">
+      AND financing_channel = #{mainBody,jdbcType=VARCHAR}
+    </if>
+  </select>
+  <!-- 根据银行编码查询应平台 -->
+  <select id="getBankNormalLimitByBankKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select * from ZH_BANK_NORMAL_LIMIT t  where 1 = 1
+    <if test="bankKey != null and bankKey != ''">
+      AND BANK_KEY = #{bankKey,jdbcType=VARCHAR}
+    </if>
+    order by deduct_level
+  </select>
+
+  <select id="getBankNormalLimitList" parameterType="map" resultMap="BaseResultMap">
+    SELECT * FROM (
+    SELECT A.*, ROWNUM RN FROM (
+    SELECT * FROM ZH_BANK_NORMAL_LIMIT where 1=1
+    <if test="channelNumber != null and channelNumber != ''">
+      AND FINANCING_CHANNEL = #{channelNumber,jdbcType=VARCHAR}
+    </if>
+    <if test="bankKey != null and bankKey != ''">
+      AND BANK_KEY = #{bankKey,jdbcType=VARCHAR}
+    </if>
+    <if test="mainBody != null and mainBody != ''">
+      AND financing_channel = #{mainBody,jdbcType=VARCHAR}
+    </if>
+    ) A <![CDATA[  WHERE ROWNUM <= #{end}
+	) WHERE RN >= #{start} ]]>
+
+  </select>
+
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from ZH_BANK_NORMAL_LIMIT
+    where PRI_NUMBER = #{priNumber,jdbcType=VARCHAR}
+  </select>
+
+  <update id="updateBankNormalLimit" parameterType="com.zhph.payment.charge.entity.BankNormalLimit">
+    update ZH_BANK_NORMAL_LIMIT
+    <set>
+      <if test="bankCode != null">
+        BANK_CODE = #{bankCode,jdbcType=VARCHAR},
+      </if>
+      <if test="singleAmountLimit != null">
+        SINGLE_AMOUNT_LIMIT = #{singleAmountLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="dayAmountLimit != null">
+        DAY_AMOUNT_LIMIT = #{dayAmountLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="dayCountLimit != null">
+        DAY_COUNT_LIMIT = #{dayCountLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="deductLevel != null">
+        DEDUCT_LEVEL = #{deductLevel,jdbcType=DECIMAL},
+      </if>
+      <if test="isEnable != null">
+        IS_ENABLE = #{isEnable,jdbcType=CHAR},
+      </if>
+      UPDATE_TIME= sysdate,
+      <if test="mainBody != null">
+        MAIN_BODY = #{mainBody,jdbcType=VARCHAR},
+      </if>
+      <if test="singleAmountLimitBatch != null">
+        SINGLE_AMOUNT_LIMIT_BATCH = #{singleAmountLimitBatch,jdbcType=VARCHAR},
+      </if>
+      <if test="dayAmountLimitBatch != null">
+        DAY_AMOUNT_LIMIT_BATCH = #{dayAmountLimitBatch,jdbcType=VARCHAR},
+      </if>
+      <if test="updateUserId != null">
+        UPDATE_USER_ID = #{updateUserId,jdbcType=VARCHAR},
+      </if>
+    </set>
+
+    where PRI_NUMBER = #{priNumber,jdbcType=VARCHAR}
+  </update>
+
+
+
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from ZH_BANK_NORMAL_LIMIT
+    where PRI_NUMBER = #{priNumber,jdbcType=VARCHAR}
+  </delete>
+
+  <insert id="insert" parameterType="com.zhph.payment.charge.entity.BankNormalLimit">
+    <selectKey keyProperty="priNumber" resultType="String" order="BEFORE">
+      select sys_guid() from dual
+    </selectKey>
+    insert into ZH_BANK_NORMAL_LIMIT (PRI_NUMBER, FINANCING_CHANNEL, CHANNEL_NAME, 
+      BANK_KEY, BANK_CODE, BANK_NAME, 
+      SINGLE_AMOUNT_LIMIT, DAY_AMOUNT_LIMIT, DAY_COUNT_LIMIT, 
+      DEDUCT_LEVEL, IS_ENABLE, CREATE_USER_ID, 
+      CREATE_TIME, UPDATE_USER_ID, UPDATE_TIME,MAIN_BODY,SINGLE_AMOUNT_LIMIT_BATCH,DAY_AMOUNT_LIMIT_BATCH
+      )
+    values (#{priNumber,jdbcType=VARCHAR}, #{financingChannel,jdbcType=VARCHAR}, #{channelName,jdbcType=VARCHAR},
+      #{bankKey,jdbcType=VARCHAR}, #{bankCode,jdbcType=VARCHAR}, #{bankName,jdbcType=VARCHAR}, 
+      #{singleAmountLimit,jdbcType=DECIMAL}, #{dayAmountLimit,jdbcType=DECIMAL}, #{dayCountLimit,jdbcType=DECIMAL}, 
+      #{deductLevel,jdbcType=DECIMAL}, #{isEnable,jdbcType=CHAR}, #{createUserId,jdbcType=VARCHAR},
+      sysdate, #{updateUserId,jdbcType=VARCHAR}, #{updateTime,jdbcType=VARCHAR},
+      #{mainBody,jdbcType=VARCHAR}, #{singleAmountLimitBatch,jdbcType=DECIMAL},#{dayAmountLimitBatch,jdbcType=DECIMAL}
+      )
+  </insert>
+
+  <insert id="insertSelective" parameterType="com.zhph.payment.charge.entity.BankNormalLimit">
+    insert into ZH_BANK_NORMAL_LIMIT
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="priNumber != null">
+        PRI_NUMBER,
+      </if>
+      <if test="financingChannel != null">
+        FINANCING_CHANNEL,
+      </if>
+      <if test="channelName != null">
+        CHANNEL_NAME,
+      </if>
+      <if test="bankKey != null">
+        BANK_KEY,
+      </if>
+      <if test="bankCode != null">
+        BANK_CODE,
+      </if>
+      <if test="bankName != null">
+        BANK_NAME,
+      </if>
+      <if test="singleAmountLimit != null">
+        SINGLE_AMOUNT_LIMIT,
+      </if>
+      <if test="dayAmountLimit != null">
+        DAY_AMOUNT_LIMIT,
+      </if>
+      <if test="dayCountLimit != null">
+        DAY_COUNT_LIMIT,
+      </if>
+      <if test="deductLevel != null">
+        DEDUCT_LEVEL,
+      </if>
+      <if test="isEnable != null">
+        IS_ENABLE,
+      </if>
+      <if test="createUserId != null">
+        CREATE_USER_ID,
+      </if>
+      <if test="createTime != null">
+        CREATE_TIME,
+      </if>
+      <if test="updateUserId != null">
+        UPDATE_USER_ID,
+      </if>
+      <if test="updateTime != null">
+        UPDATE_TIME,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="priNumber != null">
+        #{priNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="financingChannel != null">
+        #{financingChannel,jdbcType=VARCHAR},
+      </if>
+      <if test="channelName != null">
+        #{channelName,jdbcType=VARCHAR},
+      </if>
+      <if test="bankKey != null">
+        #{bankKey,jdbcType=VARCHAR},
+      </if>
+      <if test="bankCode != null">
+        #{bankCode,jdbcType=VARCHAR},
+      </if>
+      <if test="bankName != null">
+        #{bankName,jdbcType=VARCHAR},
+      </if>
+      <if test="singleAmountLimit != null">
+        #{singleAmountLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="dayAmountLimit != null">
+        #{dayAmountLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="dayCountLimit != null">
+        #{dayCountLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="deductLevel != null">
+        #{deductLevel,jdbcType=DECIMAL},
+      </if>
+      <if test="isEnable != null">
+        #{isEnable,jdbcType=CHAR},
+      </if>
+      <if test="createUserId != null">
+        #{createUserId,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="updateUserId != null">
+        #{updateUserId,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+
+  <update id="updateByPrimaryKeySelective" parameterType="com.zhph.payment.charge.entity.BankNormalLimit">
+    update ZH_BANK_NORMAL_LIMIT
+    <set>
+      <if test="financingChannel != null">
+        FINANCING_CHANNEL = #{financingChannel,jdbcType=VARCHAR},
+      </if>
+      <if test="channelName != null">
+        CHANNEL_NAME = #{channelName,jdbcType=VARCHAR},
+      </if>
+      <if test="bankKey != null">
+        BANK_KEY = #{bankKey,jdbcType=VARCHAR},
+      </if>
+      <if test="bankCode != null">
+        BANK_CODE = #{bankCode,jdbcType=VARCHAR},
+      </if>
+      <if test="bankName != null">
+        BANK_NAME = #{bankName,jdbcType=VARCHAR},
+      </if>
+      <if test="singleAmountLimit != null">
+        SINGLE_AMOUNT_LIMIT = #{singleAmountLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="dayAmountLimit != null">
+        DAY_AMOUNT_LIMIT = #{dayAmountLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="dayCountLimit != null">
+        DAY_COUNT_LIMIT = #{dayCountLimit,jdbcType=DECIMAL},
+      </if>
+      <if test="deductLevel != null">
+        DEDUCT_LEVEL = #{deductLevel,jdbcType=DECIMAL},
+      </if>
+      <if test="isEnable != null">
+        IS_ENABLE = #{isEnable,jdbcType=CHAR},
+      </if>
+      <if test="createUserId != null">
+        CREATE_USER_ID = #{createUserId,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        CREATE_TIME = #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="updateUserId != null">
+        UPDATE_USER_ID = #{updateUserId,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        UPDATE_TIME = sysdate,
+      </if>
+    </set>
+    where PRI_NUMBER = #{priNumber,jdbcType=VARCHAR}
+  </update>
+
+  <update id="updateByPrimaryKey" parameterType="com.zhph.payment.charge.entity.BankNormalLimit">
+    update ZH_BANK_NORMAL_LIMIT
+    set FINANCING_CHANNEL = #{financingChannel,jdbcType=VARCHAR},
+      CHANNEL_NAME = #{channelName,jdbcType=VARCHAR},
+      BANK_KEY = #{bankKey,jdbcType=VARCHAR},
+      BANK_CODE = #{bankCode,jdbcType=VARCHAR},
+      BANK_NAME = #{bankName,jdbcType=VARCHAR},
+      SINGLE_AMOUNT_LIMIT = #{singleAmountLimit,jdbcType=DECIMAL},
+      DAY_AMOUNT_LIMIT = #{dayAmountLimit,jdbcType=DECIMAL},
+      DAY_COUNT_LIMIT = #{dayCountLimit,jdbcType=DECIMAL},
+      DEDUCT_LEVEL = #{deductLevel,jdbcType=DECIMAL},
+      IS_ENABLE = #{isEnable,jdbcType=CHAR},
+      CREATE_USER_ID = #{createUserId,jdbcType=VARCHAR},
+      CREATE_TIME = #{createTime,jdbcType=VARCHAR},
+      UPDATE_USER_ID = #{updateUserId,jdbcType=VARCHAR},
+      UPDATE_TIME = #{updateTime,jdbcType=VARCHAR}
+    where PRI_NUMBER = #{priNumber,jdbcType=VARCHAR}
+  </update>
+
+  <select id="queryByBankKey" parameterType="map" resultMap="BaseResultMap" flushCache="true" useCache="false">
+    SELECT *
+    FROM  zh_bank_normal_limit
+    WHERE bank_key = #{bankKey,jdbcType=VARCHAR}
+    <if test="mainBody != null and  mainBody != ''" >
+       and MAIN_BODY = #{mainBody,jdbcType=VARCHAR}
+    </if>
+    <if test="financingChannel != null and financingChannel != '' " >
+      and FINANCING_CHANNEL = #{financingChannel,jdbcType=VARCHAR}
+    </if>
+    AND is_enable = '1'
+    ORDER by deduct_level
+  </select>
+
+  <select id="queryPayCode" resultType="java.lang.String">
+    SELECT bank_code
+    FROM zh_bank_normal_limit
+    WHERE financing_channel = #{paymentChannel,jdbcType=VARCHAR}
+    AND  bank_key = #{bankKey,jdbcType=VARCHAR}
+  </select>
+
+  <resultMap id="payCodesMap" type="java.util.HashMap">
+    <result column="bank_key" property="bankKey"></result>
+    <result column="bank_code" property="bankCode"></result>
+  </resultMap>
+
+
+
+
+  <select id="queryPayCodesByChannel" resultMap="payCodesMap" parameterType="String">
+    SELECT bank_key,bank_code
+    FROM  zh_bank_normal_limit
+    WHERE financing_channel = #{paymentChannel,jdbcType=VARCHAR}
+    and financing_channel = #{mainBody,jdbcType=VARCHAR}
+    AND  is_enable = '1'
+  </select>
+
+  <!--查询扣款限制表-->
+  <select id="getListForChannelList" parameterType="java.util.Map" resultMap="BaseResultMap" useCache="false">
+        select t.pri_number, t.financing_channel, t.channel_name, t.bank_key, t.bank_code, t.bank_name, t.single_amount_limit,
+            t.day_amount_limit, t.day_count_limit, t.deduct_level, t.is_enable,t1.user_name as create_user_id,
+            t.create_time,t.update_user_id,t.update_time,
+        main_body,t.single_amount_limit_batch,t.day_amount_limit_batch
+        from zh_bank_normal_limit t
+        left join zhph_user t1 on t.create_user_id = t1.user_id
+    where 1=1
+    <if test="parameter.financingChannel != null and parameter.financingChannel != '' ">
+        and t.financing_channel = #{parameter.financingChannel}
+    </if>
+    <if test="parameter.channelName != null and parameter.channelName != '' ">
+      and t.channel_name  like   '%'||#{parameter.channelName}||'%'
+    </if>
+    <if test="parameter.bankCode != null and parameter.bankCode != '' ">
+      and t.bank_code = #{parameter.bankCode}
+    </if>
+    <if test="parameter.bankName != null and parameter.bankName != '' ">
+      and t.bank_name  like   '%'||#{parameter.bankName}||'%'
+    </if>
+    <if test="parameter.bankKey != null and parameter.bankKey != '' ">
+      and t.bank_key = #{parameter.bankKey}
+    </if>
+    <if test="parameter.mainBody != null and parameter.mainBody != '' ">
+      and t.main_body = #{parameter.mainBody}
+    </if>
+    ORDER BY CREATE_TIME DESC
+  </select>
+</mapper>

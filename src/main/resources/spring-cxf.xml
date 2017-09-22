@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jaxws="http://cxf.apache.org/jaxws" xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+       xmlns:cxf="http://cxf.apache.org/core"
+       xsi:schemaLocation="http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+                http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd http://cxf.apache.org/core http://cxf.apache.org/schemas/core.xsd">
+    
+    <description>框架WebService配置</description>
+
+    <context:component-scan base-package="com.zhph.api" />
+
+    <import resource="classpath:META-INF/cxf/cxf.xml" />
+    <import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
+    <import resource="classpath:META-INF/cxf/cxf-extension-soap.xml"/>
+
+
+
+    <!-- 扣款服务restful webservice -->
+    <jaxrs:server id="chargeDealService" address="/v1">
+        <jaxrs:serviceBeans>
+            <ref bean="chargeDealServiceImp" />
+        </jaxrs:serviceBeans>
+        <jaxrs:features>
+            <cxf:logging />
+        </jaxrs:features>
+        <jaxrs:providers>
+            <bean class="org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider"/>
+        </jaxrs:providers>
+        <jaxrs:inInterceptors>
+            <ref bean="chargeServiceInputInterceptor"/>
+        </jaxrs:inInterceptors>
+        <jaxrs:extensionMappings>
+            <entry key="json" value="application/json" />
+            <entry key="xml" value="application/xml" />
+        </jaxrs:extensionMappings>
+    </jaxrs:server>
+
+
+
+    <!-- 远程任务调用restful webservice -->
+    <jaxrs:server id="remoteCall" address="/invoke">
+        <jaxrs:serviceBeans>
+            <ref bean="remoteCallServiceImp" />
+        </jaxrs:serviceBeans>
+        <jaxrs:features>
+            <cxf:logging />
+        </jaxrs:features>
+        <jaxrs:providers>
+            <bean class="org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider"/>
+        </jaxrs:providers>
+        <jaxrs:inInterceptors>
+        </jaxrs:inInterceptors>
+        <jaxrs:extensionMappings>
+            <entry key="json" value="application/json" />
+            <entry key="xml" value="application/xml" />
+        </jaxrs:extensionMappings>
+    </jaxrs:server>
+
+
+</beans>

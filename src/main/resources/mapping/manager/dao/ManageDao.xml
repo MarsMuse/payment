@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhph.manager.dao.ManageDao" >
+
+    <select id="getUserMenuList" parameterType="java.lang.String"  resultType="com.zhph.manager.model.Menu">
+
+
+         select distinct t7.ID as id,
+                  t7.PARENT_ID as parentId,
+                  t7.NAME as name,
+                  t7.URL as url,
+                  t7.ICON as icon,
+                  t7.DISPLAY_ORDER as displayOrder,
+                  t7.PATH as path,
+                  t7.NOTE as note,
+                  t7.LOCKED as locked
+        from ZHPH_USER t1,
+                 ZHPH_USER_ROLE t2,
+                 ZHPH_ROLE t3,
+                 ZHPH_ROLE_RIGHT t4,
+                 ZHPH_RIGHT t5,
+                 ZHPH_RIGHT_MENU t6,
+                 ZHPH_RES_MENU t7
+        where      t1.login_Code = #{loginCode ,jdbcType=VARCHAR} and t1.STATUS = 1 and t3.LOCKED = 0
+                   and t5.LOCKED = 0 and t7.LOCKED = 0 and t1.USER_ID = t2.USER_ID
+                   and t2.ROLE_ID = t3.ID and t3.ID = t4.ROLE_ID and t4.RIGHT_ID = t5.ID
+                   and t5.ID = t6.RIGHT_ID and t6.MENU_ID = t7.ID
+    </select>
+
+
+    <select id="getListForUserInfo" parameterType="java.util.Map"  resultType="com.zhph.manager.model.UserBean">
+        SELECT
+            user_id AS userId  , user_name AS userName,
+            mobile AS mobile,e_mail AS eMail ,
+            error_times AS errorTimes , is_lock AS isLock,
+            create_time AS createTime , last_time AS lastTime,
+            status AS status , login_code AS loginCode,
+            user_code AS userCode
+        FROM zhph_user
+        where 1=1
+        <if test="parameter.loginCode != null and parameter.loginCode != '' ">
+            and  login_code like '%' || #{parameter.loginCode} || '%'
+        </if>
+
+        <if test="parameter.userName != null and parameter.userName != '' ">
+            and  user_name like '%' || #{parameter.userName} || '%'
+        </if>
+
+        <if test="parameter.userCode != null and parameter.userCode != '' ">
+            and  user_code like '%' || #{parameter.userCode} || '%'
+        </if>
+
+        order by create_time desc
+    </select>
+
+    <select id="verifyAccount"  parameterType="java.lang.String"  resultType="java.lang.Integer">
+        select count(1)
+        from zhph_user
+        where LOGIN_CODE = #{loginCode}
+    </select>
+
+    <insert id="addUser" parameterType="com.zhph.manager.model.UserBean"  >
+
+        insert into zhph_user
+        (
+          user_id         , login_code      ,
+          user_name       , user_code       ,
+          mobile          , e_mail          ,
+          user_pass       , create_time
+        )select
+          sys_guid()                                , #{user.loginCode  , jdbcType=VARCHAR}         ,
+          #{user.userName , jdbcType=VARCHAR}       , #{user.userCode   , jdbcType=VARCHAR}         ,
+          #{user.mobile   ,jdbcType=VARCHAR}        , #{user.eMail      , jdbcType=VARCHAR}         ,
+          #{user.userPass ,jdbcType=VARCHAR}        , sysdate
+        from    dual
+        WHERE   NOT EXISTS (
+        SELECT  zu.login_code
+        FROM    zhph_user zu
+        WHERE   zu.login_code = #{user.loginCode , jdbcType=VARCHAR}
+        )
+
+    </insert>
+
+    <update id="updateLock" parameterType="java.lang.String">
+        update zhph_user
+        set is_lock = #{lock , jdbcType=VARCHAR}
+        where user_id = #{id , jdbcType=VARCHAR }
+    </update>
+
+    <delete id="physicalDelete" parameterType="java.lang.String">
+        delete from zhph_user
+        where user_id = #{id , jdbcType=VARCHAR }
+    </delete>
+</mapper>

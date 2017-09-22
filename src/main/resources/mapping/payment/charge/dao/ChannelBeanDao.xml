@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhph.payment.charge.dao.ChannelBeanDao" >
+
+    <!--获取到服务Bean名称-->
+    <select id="getBeanNameByChannelNo" parameterType="java.lang.String"  resultType="java.lang.String">
+
+        SELECT zc.channel_service_bean
+        FROM zh_channel_basic_info zc
+        WHERE zc.flag = '1'
+        AND zc.locked = '0'
+        AND zc.channel_no = #{channelNo} and zc.main_body = #{mainBody}
+
+    </select>
+
+
+    <!--获取到渠道批扣单次限制条数-->
+    <select id="getChannelBatchLimit" parameterType="java.lang.String"  resultType="java.lang.Integer">
+
+        SELECT zc.batch_sum_limit
+        FROM zh_channel_basic_info zc
+        WHERE zc.flag = '1'
+        AND zc.locked = '0'
+        AND zc.channel_no = #{channelNo} and zc.main_body = #{mainBody}
+
+    </select>
+
+</mapper>
